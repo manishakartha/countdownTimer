@@ -1,6 +1,8 @@
 
 import './App.css';
 import { useEffect, useState } from 'react';
+import Button from './Button';
+import Input from './Input';
 
 function App() {
   const[start,setStart] = useState(false);
@@ -18,10 +20,11 @@ function App() {
     setPaused(true)
   }
   const handleInputChange=(e)=>{
-    const updatedData=(prevstate)=>(
-      {...prevstate,[e.target.name]:e.target.value
-    })
-    setData(updatedData)
+    setData((prevData)=>(
+      {
+        ...prevData,[e.target.name]:Math.min(59,parseInt(e.target.value)||0)
+      }
+    ))
   };
 
   const handleResume =()=>{
@@ -32,52 +35,50 @@ function App() {
     setData({hours:0,minutes:0,seconds:0})
   }
   useEffect(()=>{
-    const timer = setInterval(()=>{
-
-    },1000)
-
+    if(start && !paused) { 
+      const timer = setInterval(()=>{
+      setData((prevData)=>{
+        const{hours,minutes,seconds}=prevData;
+      
+        if (hours === 0 && minutes === 0 && seconds === 0) {
+          clearInterval(timer);
+          setStart(false); // Stop timer when it reaches zero
+          return prevData;
+        }
+        if (seconds > 0) {
+          return { ...prevData, seconds: seconds - 1 };
+        } else if (minutes > 0) {
+          return { ...prevData, minutes: minutes - 1, seconds: 59 };
+        } else if (hours > 0) {
+          return { ...prevData, hours: hours - 1, minutes: 59, seconds: 59 };
+        }
+        return prevData
+      })
+      }
+    ,1000)
+  
     return () => clearInterval(timer);
+  }
+
+
   },[start,paused,data])
   return (
     <div className="App">
       <div>
         <h2 className='header'>Timer</h2>
         </div>
-        <div className='input-container'>
-          <input name="hours" 
-          onChange={(e)=>{handleInputChange(e)}}  
-          value={data.hours} 
-          className="input" placeholder='HH'/>
-          <input  name="minutes" 
-          onChange={(e)=>{handleInputChange(e)}} 
-          value={data.minutes} 
-          className="input" placeholder='MM'/>
-          <input  name="seconds" 
-          onChange={(e)=>{handleInputChange(e)}} 
-          value={data.seconds} 
-          className="input" placeholder='SS'/>
-        </div>
-        {
-        !start ? 
-          <div>
-            <button onClick={handleStart} className="start-button">Start</button>
-          </div> :
-          <div>
-            {
-              !paused ?  <button className="pause-button" onClick={handlePause}>Pause</button> :
-              <button onClick={handleResume} className="resume-button">Resume</button>
-            }
-           
-           
-            <button  onClick={handleReset} className="reset-button">Reset</button>
-          </div>
-      }
-      
-        
-      
-      
-      
-    
+        <Input
+        data={data}
+        handleInputChange={(e)=>handleInputChange(e)}
+        />
+        <Button
+        start={start}
+        paused={paused}
+        handleStart={handleStart}
+        handlePause={handlePause}
+        handleReset={handleReset}
+        handleResume={handleResume}
+        />
     </div>
   );
 }
